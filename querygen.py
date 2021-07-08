@@ -74,12 +74,18 @@ def querygen():
 
     #while False:
     while 'LastEvaluatedKey' in response:
-        sleep(20)
+
         key = response['LastEvaluatedKey']
-        response = table.scan(
-            FilterExpression = eval(QC.query),
-            ExclusiveStartKey = key
-        )
+
+        while True:
+            try:
+                response = table.scan(
+                    FilterExpression = eval(QC.query),
+                    ExclusiveStartKey = key
+                )
+                break
+            except:
+                print('failed')
 
         for item in response["Items"]:
             print(item['consumerId'])

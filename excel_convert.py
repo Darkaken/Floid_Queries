@@ -36,6 +36,33 @@ class Stats(object):
         self.general_stats['Min'] = min(obj)
         self.general_stats['STDEV'] = round(stdev(obj))
 
+def merger(containers):
+
+    result = {}
+    for account in containers.accounts:
+        result = mergeDicts(result, account.freq_dict)
+
+    return result
+
+def mergeDicts(dict1, dict2):
+
+    result = {}
+
+    for key in dict1.keys():
+        try:
+            result[key] += dict1[key]
+        except KeyError:
+            result[key] = dict1[key]
+
+    for key in dict2.keys():
+        try:
+            result[key] += dict2[key]
+        except KeyError:
+            result[key] = dict2[key]
+
+    return result
+
+
 def openSheet():
 
     scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
@@ -44,7 +71,7 @@ def openSheet():
     client = gspread.authorize(creds)
     sheet = client.open('Estadisticas por Banco')
 
-    return sheet.get_worksheet(1)  # Santander
+    return sheet.get_worksheet(2)
 
 def obtenerStats(contenedor):
 
@@ -54,7 +81,6 @@ def obtenerStats(contenedor):
 
     for account in contenedor.accounts:
         stats.general_stats['Total Reportes'] += 1
-        account.standarize_Santander()  #Remover al re-crear cuentas
 
         account_dict[account.consumerId] = []
 
@@ -86,23 +112,54 @@ def obtenerStats(contenedor):
 
 def statsToSheet(sheetInstance, stat):
 
-    count = 5    #Desface Row
+    count = 2    #Desface Row
     for key, values in stat.stats.items():
         sheetInstance.update_cell(count, 2, key)
         sleep(5)
 
-        iterator = 3   #Desface Col
+        iterator = 1  #Desface Col
         for val in values:
             sheetInstance.update_cell(count, iterator, val)
             iterator += 1
 
         count += 1
 
-    sheetInstance.update_cell(3, 11, stat.general_stats['Reportes'])
-    sheetInstance.update_cell(4, 11, stat.general_stats['Promedio'])
-    sheetInstance.update_cell(5, 11, stat.general_stats['Max'])
-    sheetInstance.update_cell(6, 11, stat.general_stats['Min'])
-    sheetInstance.update_cell(7, 11, stat.general_stats['STDEV'])
+    sheetInstance.update_cell(1, 11, stat.general_stats['Reportes'])
+    sheetInstance.update_cell(2, 11, stat.general_stats['Promedio'])
+    sheetInstance.update_cell(3, 11, stat.general_stats['Max'])
+    sheetInstance.update_cell(4, 11, stat.general_stats['Min'])
+    sheetInstance.update_cell(5, 11, stat.general_stats['STDEV'])
+
+def getFrecuency(freq_dict):
+    new_dict = {}
+
+    all_words = sum([x for x in freq_dict.values()])
+
+    for key in freq_dict.keys():
+        num = freq_dict[key]
+        new_dict[key] = [num, num/all_words]
+
+    return new_dict
+
+def frecuencyToSheet(sheetInstance, freq_dict):
+
+    freq_dict = getFrecuency(freq_dict)
+
+    count = 2   #Desface Row
+    column = 13  #Desface Col
+    for key in freq_dict.keys():
+
+        if freq_dict[key][0] < 5:
+            pass
+        else:
+            sleep(1)
+            sheetInstance.update_cell(count, column, key)
+            sleep(1)
+            sheetInstance.update_cell(count, column + 1, freq_dict[key][0])
+            sleep(1)
+            sheetInstance.update_cell(count, column + 2, freq_dict[key][1])
+
+            count += 1
 
 
 if __name__ == '__main__':
@@ -110,4 +167,5 @@ if __name__ == '__main__':
     container = importData()
 
     worksheet = openSheet()
+    frecuencyToSheet(worksheet, merger(container))
     statsToSheet(worksheet, obtenerStats(container))

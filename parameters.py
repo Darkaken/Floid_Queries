@@ -2,7 +2,7 @@
 #table_name = "backoffice-dev-reports"
 
 table_name = "dashboard-prod-reports"
-
+bank = 'bancodechile'
 
 min_transaction_quantity = 5
 
@@ -12,7 +12,7 @@ trash_filters = [
 ]
 
 query_filters = [
-    "bank == santander"
+    f"bank == {bank}",
 ]
 
 complex_filters = [

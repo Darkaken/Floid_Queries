@@ -1,11 +1,13 @@
 
 from querygen import querygen
 import pickle
+from parameters import bank
 
 class Account(object):
     def __init__(self, consumerId):
         self.consumerId = consumerId
         self.transactions = []
+        self.freq_dict = None
 
     def addTransaction(self, transaction):
         self.transactions.append(['-'.join(transaction['date'].split('-')[:2]), transaction['description'], transaction['in']])
@@ -14,7 +16,20 @@ class Account(object):
         for transaction in self.transactions:
             print(transaction)
 
-    def standarize_Santander(self):
+    def genfreqdict(self):
+
+        freq_dict = {}
+
+        for transaction in self.transactions:
+            for word in transaction[1].lower().split(' '):
+                try:
+                    freq_dict[word] += 1
+                except KeyError:
+                    freq_dict[word] = 1
+
+        self.freq_dict = freq_dict
+
+    def standarize(self, banks):
 
         """
 
@@ -22,13 +37,28 @@ class Account(object):
 
         """
 
-        for item in self.transactions:
-            if "Transf" in item[1]:
-                item[1] = "Transferencia"
-            elif "REMUNERACION" in item[1]:
-                item[1] = "Remuneracion"
-            elif 'Trasp' in item[1]:
-                item[1] = 'Traspaso'
+        if banks == "santander":
+
+            for item in self.transactions:
+                if "transf" in item[1].lower():
+                    item[1] = "Transferencia"
+                elif "remuneracion" in item[1].lower():
+                    item[1] = "Remuneracion"
+                elif 'trasp' in item[1].lower():
+                    item[1] = 'Traspaso'
+
+        elif banks == 'falabella':
+            for item in self.transactions:
+                print(item)
+
+        elif banks == 'bancodechile':
+            for item in self.transactions:
+                if 'transferencia' in item[1].lower():
+                    item[1] = "Transferencia"
+                elif 'traspaso' in item[1].lower():
+                    item[1] = "Traspaso"
+                elif 'sueldo' in item[1].lower():
+                    item[1] = "Sueldo"
 
 class AccountContainer(object):
     def __init__(self):
@@ -74,29 +104,29 @@ def accountGen(data_dict):
         for item in data_dict[k]:
             temp_account.addTransaction(item)
 
-        temp_account.standarize_Santander()     #Especifico Para Santander
+        temp_account.genfreqdict()
+        temp_account.standarize(bank)
         all_accounts.add_account(temp_account)
 
     return all_accounts
 
 def exportData(item):
 
-    with open('Data/account_data_full', 'wb') as outfile:
+    with open(f'Data/{bank}.pickle', 'wb') as outfile:
         pickle.dump(item, outfile)
 
 def importData():
 
-    with open('Data/account_data_full', 'rb') as infile:
+    with open(f'Data/{bank}.pickle', 'rb') as infile:
         return pickle.load(infile)
 
 
 if __name__ == '__main__':
 
-    pass
-    #container = accountGen(inoutFiltering(duplicateFiltering(querygen())))
-    #exportData(container)
+    container = accountGen(inoutFiltering(duplicateFiltering(querygen())))
+    exportData(container)
 
-    container = importData()
+    #container = importData()
 
     print(len(container.accounts))
 
