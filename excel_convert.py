@@ -192,4 +192,5 @@ if __name__ == '__main__':
 
     worksheet = openSheet()
     frecuencyToSheet(worksheet, merger(container))
+    print('listo')
     statsToSheet(worksheet, obtenerStats(container))
