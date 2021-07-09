@@ -12,10 +12,16 @@ class QueryCreator(object):
 
         self.query = ''
 
-    def setAll(self, params):
+    def setAll(self, params, query_filter_override):
+
         self.setTableData(params.table_name)
         self.setTrashFilters(params.trash_filters)
-        self.setQueryFilters(params.query_filters)
+
+        if query_filter_override is not None:
+            self.setQueryFilters(query_filter_override)
+        else:
+            self.setQueryFilters(params.query_filters)
+
         self.setComplexFilters(params.complex_filters)
 
         self.create_filters()
@@ -53,14 +59,18 @@ class QueryCreator(object):
         for statement in filters:
             self.complex_filters.append(statement)
 
-def querygen():
+def querygen(query_filter_override):
 
     #All queries include unilimited pagination
 
     data = []
 
     QC = QueryCreator()
-    QC.setAll(parameters)
+
+    if query_filter_override is not None:
+        QC.setAll(parameters, query_filter_override)
+    else:
+        QC.setAll(parameters, None)
 
     dynamodb = boto3.resource("dynamodb", region_name = "sa-east-1")
     table = dynamodb.Table(QC.table)
@@ -88,7 +98,7 @@ def querygen():
                 print('failed')
 
         for item in response["Items"]:
-            print(item['consumerId'])
+            #print(item['bank'])
             data.append([item['consumerId'], item['transactions']])
 
     return data
@@ -96,7 +106,7 @@ def querygen():
 
 if __name__ == '__main__':
 
-    querygen()
+    querygen(None)
 
 
 """ 

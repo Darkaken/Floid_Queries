@@ -123,7 +123,8 @@ def importData():
 
 if __name__ == '__main__':
 
-    container = accountGen(inoutFiltering(duplicateFiltering(querygen())))
+    container = accountGen(inoutFiltering(duplicateFiltering(querygen(None))))
+
     exportData(container)
 
     #container = importData()

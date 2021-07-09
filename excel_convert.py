@@ -71,7 +71,7 @@ def openSheet():
     client = gspread.authorize(creds)
     sheet = client.open('Estadisticas por Banco')
 
-    return sheet.get_worksheet(2)
+    return sheet.get_worksheet(3)
 
 def obtenerStats(contenedor):
 
@@ -113,22 +113,33 @@ def obtenerStats(contenedor):
 def statsToSheet(sheetInstance, stat):
 
     count = 2    #Desface Row
-    for key, values in stat.stats.items():
-        sheetInstance.update_cell(count, 2, key)
-        sleep(5)
 
-        iterator = 1  #Desface Col
-        for val in values:
-            sheetInstance.update_cell(count, iterator, val)
-            iterator += 1
+    for key, values in stat.stats.items():
+
+        while True:
+            try:
+                sheetInstance.update_cell(count, 1, key)
+                for i in range(5):
+                    sleep(1)
+                    sheetInstance.update_cell(count, i+2, values[i])
+
+                break
+            except:
+                pass
 
         count += 1
 
-    sheetInstance.update_cell(1, 11, stat.general_stats['Reportes'])
-    sheetInstance.update_cell(2, 11, stat.general_stats['Promedio'])
-    sheetInstance.update_cell(3, 11, stat.general_stats['Max'])
-    sheetInstance.update_cell(4, 11, stat.general_stats['Min'])
-    sheetInstance.update_cell(5, 11, stat.general_stats['STDEV'])
+
+    while True:
+        try:
+            sheetInstance.update_cell(1, 11, stat.general_stats['Reportes'])
+            sheetInstance.update_cell(2, 11, stat.general_stats['Promedio'])
+            sheetInstance.update_cell(3, 11, stat.general_stats['Max'])
+            sheetInstance.update_cell(4, 11, stat.general_stats['Min'])
+            sheetInstance.update_cell(5, 11, stat.general_stats['STDEV'])
+            break
+        except:
+            pass
 
 def getFrecuency(freq_dict):
     new_dict = {}
@@ -143,23 +154,36 @@ def getFrecuency(freq_dict):
 
 def frecuencyToSheet(sheetInstance, freq_dict):
 
+    lista = []
     freq_dict = getFrecuency(freq_dict)
 
-    count = 2   #Desface Row
-    column = 13  #Desface Col
     for key in freq_dict.keys():
+        lista.append([key, freq_dict[key][0], freq_dict[key][1]])
 
-        if freq_dict[key][0] < 5:
+    lista.sort(key = lambda x: x[1], reverse = True)
+
+    count = 280   #Desface Row
+    column = 13  #Desface Col
+    for item in lista:
+
+        #if True:
+        if item[1] < 10:
             pass
         else:
-            sleep(1)
-            sheetInstance.update_cell(count, column, key)
-            sleep(1)
-            sheetInstance.update_cell(count, column + 1, freq_dict[key][0])
-            sleep(1)
-            sheetInstance.update_cell(count, column + 2, freq_dict[key][1])
+            while True:
+                try:
+                    sleep(1)
+                    sheetInstance.update_cell(count, column, item[0])
+                    sleep(1)
+                    sheetInstance.update_cell(count, column + 1, item[1])
+                    sleep(1)
+                    sheetInstance.update_cell(count, column + 2, item[2])
 
-            count += 1
+                    count += 1
+                    break
+
+                except:
+                    pass
 
 
 if __name__ == '__main__':

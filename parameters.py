@@ -8,7 +8,7 @@ min_transaction_quantity = 5
 
 trash_filters = [
     "status == OK",
-    "country == CL",
+    #"country == CL",
 ]
 
 query_filters = [
