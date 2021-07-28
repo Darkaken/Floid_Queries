@@ -10,11 +10,14 @@ class Account(object):
         self.freq_dict = None
 
     def addTransaction(self, transaction):
-        self.transactions.append(['-'.join(transaction['date'].split('-')[:2]), transaction['description'], transaction['in']])
+        self.transactions.append(['-'.join(transaction['date'].split('-')[:2]), transaction['description'], transaction['in'], transaction['out']])
 
     def displayAll(self):
         for transaction in self.transactions:
             print(transaction)
+
+        print(" ")
+        print(f"Transacciones Totales: {len(self.transactions)}")
 
     def genfreqdict(self):
 
@@ -110,22 +113,33 @@ def accountGen(data_dict):
 
     return all_accounts
 
-def exportData(item):
+def exportData(item, all_banks = False):
 
-    with open(f'Data/{bank}.pickle', 'wb') as outfile:
-        pickle.dump(item, outfile)
+    if not all_banks:
+        with open(f'Data/{bank}.pickle', 'wb') as outfile:
+            pickle.dump(item, outfile)
 
-def importData():
+    else:
+        with open(f'Data/all_reports.pickle', 'wb') as infile:
+            return pickle.dump(item, infile)
 
-    with open(f'Data/{bank}.pickle', 'rb') as infile:
-        return pickle.load(infile)
+def importData(all_banks = False):
+
+    if not all_banks:
+        with open(f'Data/{bank}.pickle', 'rb') as infile:
+            return pickle.load(infile)
+    else:
+        with open(f'../Data/all_reports.pickle', 'rb') as infile:
+            return pickle.load(infile)
 
 
 if __name__ == '__main__':
 
-    container = accountGen(inoutFiltering(duplicateFiltering(querygen(None))))
+    #container = accountGen(inoutFiltering(duplicateFiltering(querygen(None))))
 
-    exportData(container)
+    container = accountGen(duplicateFiltering(querygen(None)))
+
+    exportData(container, all_banks=True)
 
     #container = importData()
 

@@ -12,7 +12,7 @@ trash_filters = [
 ]
 
 query_filters = [
-    f"bank == {bank}",
+    #f"bank == {bank}",
 ]
 
 complex_filters = [

@@ -3,6 +3,7 @@ import parameters, boto3
 from boto3.dynamodb.conditions import Key, Attr
 from parameters import operatorConversionDict as ConvD
 from time import sleep
+import pickle
 
 class QueryCreator(object):
     def __init__(self):
@@ -99,14 +100,19 @@ def querygen(query_filter_override):
 
         for item in response["Items"]:
             #print(item['bank'])
-            data.append([item['consumerId'], item['transactions']])
+            #data.append([item['consumerId'], item['transactions']])
+            data.append(item)
 
     return data
-
+ 
 
 if __name__ == '__main__':
 
-    querygen(None)
+    item = querygen(None)
+    print(len(item))
+
+    with open(f'Data/all_data.pickle', 'wb') as infile:
+        pickle.dump(item, infile)
 
 
 """ 
