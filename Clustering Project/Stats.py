@@ -5,14 +5,16 @@ from accounts import importData, Account, AccountContainer
 from statistics import stdev, mean
 import statistics
 
+from sklearn import preprocessing
+
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 def getStats(report):
 
     returnDict = {
         "general_data": {},
-        "stdev": {}
     }
 
     try:
@@ -27,11 +29,6 @@ def getStats(report):
 
     returnDict["general_data"]["diferencia_neta"] = returnDict["general_data"]["total_in"] - returnDict["general_data"]["total_out"]
 
-    try:
-        returnDict["general_data"]["ratio"] = returnDict["general_data"]["total_in"] / returnDict["general_data"]["total_out"]
-    except:
-        returnDict["general_data"]["ratio"] = "Undefined"
-
     inflow = [x for x in report.transactions if x[2] != 0]
     outflow = [x for x in report.transactions if x[3] != 0]
 
@@ -41,55 +38,60 @@ def getStats(report):
         "total": {}
     }
 
-    for item in inflow:
+    try:
 
-        try:
-            timeDict["inflow"][item[0]] += item[2]
-            timeDict["total"][item[0]] += item[2]
-        except:
-            timeDict["inflow"][item[0]] = item[2]
-            timeDict["total"][item[0]] = item[2]
-
-    for item in outflow:
-
-        try:
-            timeDict["outflow"][item[0]] += item[3]
-            timeDict["total"][item[0]] -= item[3]
-        except:
-            timeDict["outflow"][item[0]] = item[3]
+        for item in inflow:
 
             try:
+                timeDict["inflow"][item[0]] += item[2]
+                timeDict["total"][item[0]] += item[2]
+            except:
+                timeDict["inflow"][item[0]] = item[2]
+                timeDict["total"][item[0]] = item[2]
+
+        for item in outflow:
+
+            try:
+                timeDict["outflow"][item[0]] += item[3]
                 timeDict["total"][item[0]] -= item[3]
             except:
-                timeDict["total"][item[0]] = -item[3]
+                timeDict["outflow"][item[0]] = item[3]
 
-    returnDict["general_data"]["in_transactions"] = len(inflow)
-    returnDict["general_data"]["out_transactions"] = len(outflow)
+                try:
+                    timeDict["total"][item[0]] -= item[3]
+                except:
+                    timeDict["total"][item[0]] = -item[3]
 
-    returnDict["general_data"]["avg_in"] = round(mean([x[2] for x in inflow]), 2)
-    returnDict["general_data"]["avg_out"] = round(mean([x[3] for x in outflow]), 2)
+        returnDict["general_data"]["in_transactions"] = len(inflow)
+        returnDict["general_data"]["out_transactions"] = len(outflow)
 
-    try:
-        returnDict["stdev"]["Stdev_In"] = round(stdev(timeDict["inflow"].values()), 2)
-    except statistics.StatisticsError:
-        returnDict["stdev"]["Stdev_In"] = 0
+        try:
+            returnDict["general_data"]["Stdev_In"] = round(stdev(timeDict["inflow"].values()), 2)
+        except statistics.StatisticsError:
+            returnDict["general_data"]["Stdev_In"] = 0
 
-    try:
-        returnDict["stdev"]["Stdev_Out"] = round(stdev(timeDict["outflow"].values()), 2)
-    except statistics.StatisticsError:
-        returnDict["stdev"]["Stdev_Out"] = 0
+        try:
+            returnDict["general_data"]["Stdev_Out"] = round(stdev(timeDict["outflow"].values()), 2)
+        except statistics.StatisticsError:
+            returnDict["general_data"]["Stdev_Out"] = 0
 
-    try:
-        returnDict["stdev"]["Stdev_Net"] = round(stdev(timeDict["total"].values()), 2)
-    except statistics.StatisticsError:
-        returnDict["stdev"]["Stdev_Net"] = 0
+        try:
+            returnDict["general_data"]["Stdev_Net"] = round(stdev(timeDict["total"].values()), 2)
+        except statistics.StatisticsError:
+            returnDict["general_data"]["Stdev_Net"] = 0
 
-    if True:
-    #if False:
+        returnDict["general_data"]["avg_in"] = round(mean([x for x in timeDict["inflow"].values()]), 2)
+        returnDict["general_data"]["avg_out"] = round(mean([x for x in timeDict["outflow"].values()]), 2)
 
-        createBar(timeDict["outflow"].keys(), timeDict["outflow"].values(), "Outflow")
-        createBar(timeDict["inflow"].keys(), timeDict["inflow"].values(), "Inflow")
-        createBar(timeDict["total"].keys(), timeDict["total"].values(), "Total")
+        #if True:
+        if False:
+
+            createBar(timeDict["outflow"].keys(), timeDict["outflow"].values(), "Outflow")
+            createBar(timeDict["inflow"].keys(), timeDict["inflow"].values(), "Inflow")
+            createBar(timeDict["total"].keys(), timeDict["total"].values(), "Total")
+
+    except:
+        return -1
 
     return returnDict
 
@@ -106,19 +108,31 @@ def createBar(time_list, number_list, title):
     plt.bar(ypos, number_list, label="Montos")
     plt.show()
 
-def filterContainer(container):
+def createMatrix(container):
 
-    newCont = []
+    matrix = []
+    all_returns = [getStats(item) for item in container.accounts if getStats(item) != -1]
+    for item in all_returns:
+        matrix.append([x for x in item["general_data"].values()])
 
-    for item in container.accounts:
-        if len(item.transactions) > 30:
-            newCont.append(item)
+    matrix = np.array(matrix)
 
-    return newCont
+    dataFrame = pd.DataFrame(data = matrix, columns = ["total_in", "total_out", "total_diff", "in_transactions", "out_transactions", "avg_in", "avg_out", "stdev_in", "stdev_out", "stdv_diff"])
+
+    dataFrame = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(dataFrame), columns = dataFrame.columns, index = dataFrame.index)
+
+    return dataFrame
+
+def createCsv(dataFrame):
+
+    dataFrame.to_csv("matrix.csv", encoding = "utf-8", index = False, sep = ",", header = False)
+
+
 
 container = importData(all_banks=True)
 
-print(getStats(container.accounts[15]))
+createCsv(createMatrix(container))
+
 
 
 """
@@ -135,7 +149,6 @@ Distancia vectorial
 
 1) Vectorizar reporte
 2) Definir Metrica
-
 
 Dendograma
 Propuesta del vector de features que vamos a usar (returnDict)
