@@ -189,7 +189,7 @@ def frecuencyToSheet(sheetInstance, freq_dict):
 if __name__ == '__main__':
 
     container = importData()
-
+    
     worksheet = openSheet()
     frecuencyToSheet(worksheet, merger(container))
     print('listo')

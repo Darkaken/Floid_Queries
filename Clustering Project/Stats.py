@@ -1,7 +1,7 @@
 
 import pickle
 
-from accounts import importData, Account, AccountContainer
+from accounts import duplicateFiltering, accountGen
 from statistics import stdev, mean
 import statistics
 
@@ -111,6 +111,7 @@ def createBar(time_list, number_list, title):
 def createMatrix(container):
 
     matrix = []
+    i = 0
     all_returns = [getStats(item) for item in container.accounts if getStats(item) != -1]
     for item in all_returns:
         matrix.append([x for x in item["general_data"].values()])
@@ -125,15 +126,16 @@ def createMatrix(container):
 
 def createCsv(dataFrame):
 
-    dataFrame.to_csv("matrix.csv", encoding = "utf-8", index = False, sep = ",", header = False)
+    dataFrame.to_csv("matrix_estado.csv", encoding = "utf-8", index = False, sep = ",", header = False)
 
+with open("../Data/all_data.pickle", "rb") as infile:
+    container = pickle.load(infile)
 
+data = [[x["consumerId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "estado"]
 
-container = importData(all_banks=True)
+container2 = accountGen(duplicateFiltering(data))
 
-createCsv(createMatrix(container))
-
-
+createCsv(createMatrix(container2))
 
 """
 Restriction para arbol

@@ -137,13 +137,16 @@ if __name__ == '__main__':
 
     #container = accountGen(inoutFiltering(duplicateFiltering(querygen(None))))
 
-    container = accountGen(duplicateFiltering(querygen(None)))
+    #container = accountGen(duplicateFiltering(querygen(None)))
 
-    exportData(container, all_banks=True)
+    #exportData(container, all_banks=False)
 
     #container = importData()
 
-    print(len(container.accounts))
+    with open("Data/all_data.pickle",  "rb") as infile:
+        container = pickle.load(infile)
 
+    data = [[x["consumerId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "santander"]
 
+    container2 = accountGen(duplicateFiltering(data))
 

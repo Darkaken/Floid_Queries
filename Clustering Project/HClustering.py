@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import plotly.figure_factory as ff
 
-predictor = pd.read_csv("matrix.csv")
+predictor = pd.read_csv("matrix_estado.csv")
 
 ms = MeanShift()
 ms.fit(predictor)
@@ -23,7 +23,7 @@ for center in cluster_centers:
 
 fig = ff.create_dendrogram(predictor.to_numpy())
 fig.update_layout(width = 800, height = 500)
-fig.write_html("fig.html")
+fig.write_html("fig_estado.html")
 
 #colors = 10 * ["r.", "g.", "b.", "c.", "k.", "y.", "m."]
 

@@ -2,13 +2,13 @@
 #table_name = "backoffice-dev-reports"
 
 table_name = "dashboard-prod-reports"
-bank = 'bancodechile'
+bank = 'santander'
 
 min_transaction_quantity = 5
 
 trash_filters = [
     "status == OK",
-    #"country == CL",
+    "country == CL",
 ]
 
 query_filters = [
