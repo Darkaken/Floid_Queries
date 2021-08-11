@@ -5,31 +5,72 @@ import numpy as np
 import pandas as pd
 import plotly.figure_factory as ff
 
-predictor = pd.read_csv("matrix_estado.csv")
+bankname = "santander"
+request_id = ["0fde7722-34cb-484b-8bd6-76668361c65f", "5a33970e-1701-418b-8267-179929cd2b08", "b111bf65-ab0e-494f-9c96-ad30986b6f52", "c9e83931-34d6-4db7-9d96-c1305bd0bcb4"]
 
-ms = MeanShift()
-ms.fit(predictor)
-labels = ms.labels_
+def regular_clustering():
 
-cluster_centers = ms.cluster_centers_
+    predictor = pd.read_csv(f"matrix_{bankname}.csv")
+    trainer = predictor.iloc[: , :-1]
 
-n_clusters_ = len(np.unique(labels))
+    print(trainer)
 
-print("Number of Clusters: ", n_clusters_)
-print("Cluster Centers:")
+    ms = MeanShift()
+    ms.fit(trainer)
+    labels = ms.labels_
 
-for center in cluster_centers:
-    print(center)
+    cluster_centers = ms.cluster_centers_
 
-fig = ff.create_dendrogram(predictor.to_numpy())
-fig.update_layout(width = 800, height = 500)
-fig.write_html("fig_estado.html")
+    n_clusters_ = len(np.unique(labels))
 
-#colors = 10 * ["r.", "g.", "b.", "c.", "k.", "y.", "m."]
+    print("Number of Clusters: ", n_clusters_)
+    #print("Cluster Centers:")
 
-#for i in range(len(predictor)):
-#    plt.plot(predictor[i][0], predictor[i][1], colors[labels[i]], markersize = 10)
+    #for center in cluster_centers:
+    #    print(center)
 
-#plt.scatter(cluster_centers[:, 0], cluster_centers[:, 1], marker = "x", s = 150, linewidths = 5, zorder = 10)
+    data = trainer.to_numpy()
 
-#plt.show()
+    names = predictor.iloc[: , -1].tolist()
+
+    names2 = []
+    for name in names:
+        if name not in request_id:
+            names2.append("")
+        else:
+            names2.append(name)
+            print("True")
+
+    fig = ff.create_dendrogram(data, labels = names2)
+    fig.update_layout(width = 800, height = 500)
+    fig.write_html("fig_santander.html")
+
+def column_clustering(column_index):
+
+    predictor = pd.read_csv(f"matrix_{bankname}.csv")
+    trainer = predictor.iloc[:, column_index]
+
+    #print(trainer)
+
+    data_a = trainer.to_numpy()
+    data_zero = np.array(([0 for x in range(len(trainer))]))
+    data = np.c_[data_a, data_zero]
+
+    names = predictor.iloc[:, -1].tolist()
+
+    names2 = []
+    for name in names:
+        if name not in request_id:
+            names2.append("")
+        else:
+            names2.append(name)
+            #print("True")
+
+    print(data.shape)
+
+    fig = ff.create_dendrogram(data, labels=names2)
+    fig.update_layout(width=800, height=500)
+    fig.write_html(f"Santander_Figs/fig_santander_{column_index}.html")
+
+for i in range(10):
+    column_clustering(i)

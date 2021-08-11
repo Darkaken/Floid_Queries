@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+bankname = "santander"
+
 def getStats(report):
 
     returnDict = {
@@ -111,10 +113,11 @@ def createBar(time_list, number_list, title):
 def createMatrix(container):
 
     matrix = []
-    i = 0
-    all_returns = [getStats(item) for item in container.accounts if getStats(item) != -1]
+    all_returns = [[getStats(item), item.reportId] for item in container.accounts if getStats(item) != -1]
+
     for item in all_returns:
-        matrix.append([x for x in item["general_data"].values()])
+
+        matrix.append([x for x in item[0]["general_data"].values()])
 
     matrix = np.array(matrix)
 
@@ -122,16 +125,22 @@ def createMatrix(container):
 
     dataFrame = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(dataFrame), columns = dataFrame.columns, index = dataFrame.index)
 
+    ids = []
+    for item in all_returns:
+        ids.append(item[1])
+
+    dataFrame["id"] = ids
+
     return dataFrame
 
 def createCsv(dataFrame):
 
-    dataFrame.to_csv("matrix_estado.csv", encoding = "utf-8", index = False, sep = ",", header = False)
+    dataFrame.to_csv(f"matrix_{bankname}.csv", encoding = "utf-8", index = False, sep = ",", header = False)
 
 with open("../Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-data = [[x["consumerId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "estado"]
+data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == bankname]
 
 container2 = accountGen(duplicateFiltering(data))
 

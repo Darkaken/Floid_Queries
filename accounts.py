@@ -4,8 +4,8 @@ import pickle
 from parameters import bank
 
 class Account(object):
-    def __init__(self, consumerId):
-        self.consumerId = consumerId
+    def __init__(self, reportId):
+        self.reportId = reportId
         self.transactions = []
         self.freq_dict = None
 
@@ -148,5 +148,5 @@ if __name__ == '__main__':
 
     data = [[x["consumerId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "santander"]
 
-    container2 = accountGen(duplicateFiltering(data))
+    #container2 = accountGen(duplicateFiltering(data))
 
