@@ -81,8 +81,7 @@ def querygen(query_filter_override):
     )
 
     for item in response["Items"]:
-        #data.append(item)                                          #For Stats.py
-        data.append([item['consumerId'], item['transactions']])     #For accounts.py
+        data.append(item)                                          #For Stats.py
 
     #while False:
     while 'LastEvaluatedKey' in response:
@@ -100,9 +99,7 @@ def querygen(query_filter_override):
                 print('failed')
 
         for item in response["Items"]:
-            #data.append(item)                                      #For Stats.py
-            data.append([item['consumerId'], item['transactions']]) #For accounts.py
-
+            data.append(item)                                      #For Stats.py
 
     return data
  
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     item = querygen(None)
     print(len(item))
 
-    with open(f'Data/all_data.pickle', 'wb') as infile:
+    with open(f'Data/all_data_colombia.pickle', 'wb') as infile:
         pickle.dump(item, infile)
 
 

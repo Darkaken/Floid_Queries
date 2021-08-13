@@ -135,7 +135,12 @@ def importData(all_banks = False):
 
 if __name__ == '__main__':
 
-    container = accountGen(inoutFiltering(duplicateFiltering(querygen(None))))
+    with open("Data/all_data.pickle", "rb") as infile:
+        container = pickle.load(infile)
+
+    data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "estado"]
+
+    container = accountGen(inoutFiltering(duplicateFiltering(data)))
 
     #container = accountGen(duplicateFiltering(querygen(None)))
 

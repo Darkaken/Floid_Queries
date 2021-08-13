@@ -82,11 +82,11 @@ def obtenerStats(contenedor):
     for account in contenedor.accounts:
         stats.general_stats['Total Reportes'] += 1
 
-        account_dict[account.consumerId] = []
+        account_dict[account.reportId] = []
 
         for item in account.transactions:
 
-            account_dict[account.consumerId].append(item)
+            account_dict[account.reportId].append(item)
 
             try:
                 amount = float(f"{item[2]}")
@@ -150,6 +150,7 @@ def getFrecuency(freq_dict):
         num = freq_dict[key]
         new_dict[key] = [num, num/all_words]
 
+    #print("listo")
     return new_dict
 
 def frecuencyToSheet(sheetInstance, freq_dict):
@@ -162,7 +163,7 @@ def frecuencyToSheet(sheetInstance, freq_dict):
 
     lista.sort(key = lambda x: x[1], reverse = True)
 
-    count = 280   #Desface Row
+    count = 2   #Desface Row
     column = 13  #Desface Col
     for item in lista:
 
@@ -189,8 +190,8 @@ def frecuencyToSheet(sheetInstance, freq_dict):
 if __name__ == '__main__':
 
     container = importData()
-    
     worksheet = openSheet()
-    frecuencyToSheet(worksheet, merger(container))
+    print("sheet abierto")
+    #frecuencyToSheet(worksheet, merger(container))
     print('listo')
     statsToSheet(worksheet, obtenerStats(container))
