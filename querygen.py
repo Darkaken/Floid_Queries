@@ -81,7 +81,8 @@ def querygen(query_filter_override):
     )
 
     for item in response["Items"]:
-        data.append([item['consumerId'], item['transactions']])
+        #data.append(item)                                          #For Stats.py
+        data.append([item['consumerId'], item['transactions']])     #For accounts.py
 
     #while False:
     while 'LastEvaluatedKey' in response:
@@ -99,9 +100,9 @@ def querygen(query_filter_override):
                 print('failed')
 
         for item in response["Items"]:
-            #print(item['bank'])
-            #data.append([item['consumerId'], item['transactions']])
-            data.append(item)
+            #data.append(item)                                      #For Stats.py
+            data.append([item['consumerId'], item['transactions']]) #For accounts.py
+
 
     return data
  

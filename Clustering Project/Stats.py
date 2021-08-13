@@ -123,7 +123,7 @@ def createMatrix(container):
 
     dataFrame = pd.DataFrame(data = matrix, columns = ["total_in", "total_out", "total_diff", "in_transactions", "out_transactions", "avg_in", "avg_out", "stdev_in", "stdev_out", "stdv_diff"])
 
-    dataFrame = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(dataFrame), columns = dataFrame.columns, index = dataFrame.index)
+    #dataFrame = pd.DataFrame(preprocessing.MinMaxScaler().fit_transform(dataFrame), columns = dataFrame.columns, index = dataFrame.index)
 
     ids = []
     for item in all_returns:
@@ -135,12 +135,12 @@ def createMatrix(container):
 
 def createCsv(dataFrame):
 
-    dataFrame.to_csv(f"matrix_{bankname}.csv", encoding = "utf-8", index = False, sep = ",", header = False)
+    dataFrame.to_csv(f"matrix_not_normalized.csv", encoding = "utf-8", index = False, sep = ",", header = False)
 
 with open("../Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == bankname]
+data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict] #and x["bank"] == bankname]
 
 container2 = accountGen(duplicateFiltering(data))
 
