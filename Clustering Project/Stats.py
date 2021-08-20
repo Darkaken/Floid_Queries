@@ -135,9 +135,9 @@ def createMatrix(container):
 
 def createCsv(dataFrame):
 
-    dataFrame.to_csv(f"matrix_not_normalized.csv", encoding = "utf-8", index = False, sep = ",", header = False)
+    dataFrame.to_csv(f"matrix_colombia.csv", encoding = "utf-8", index = False, sep = ",", header = False)
 
-with open("../Data/all_data.pickle", "rb") as infile:
+with open("../Data/all_data_colombia.pickle", "rb") as infile:
     container = pickle.load(infile)
 
 data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict] #and x["bank"] == bankname]

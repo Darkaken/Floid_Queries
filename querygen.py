@@ -109,7 +109,7 @@ if __name__ == '__main__':
     item = querygen(None)
     print(len(item))
 
-    with open(f'Data/all_data_colombia.pickle', 'wb') as infile:
+    with open(f'Data/all_data.pickle', 'wb') as infile:
         pickle.dump(item, infile)
 
 
