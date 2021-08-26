@@ -2,8 +2,10 @@
 import pickle
 import matplotlib.pyplot as plt
 from datetime import date, datetime, timedelta
+from fake_report import fake_report
 
 class BalanceHistory(object):
+
     globalcounternotassets = 0
     globalcounterNoneType = 0
     globalinfo = 0
@@ -13,10 +15,11 @@ class BalanceHistory(object):
         self.reportId = reportId
         self.balance = balance
         self.balance_list = self.completebalancelist(self.construct(transactions))
-        self.maketimeseries(step = 30, save=True)
+        #self.maketimeseries(step = 30, save=False)
 
         self.balance_list = self.construct(transactions)
-        self.maketimeseries(step = 3, save=True, filenameModifier = "_simplified")
+        self.getMonthlyBurnRate()
+        #self.maketimeseries(step = 3, save=False, filenameModifier = "_simplified")
 
     @staticmethod
     def completebalancelist(balance_list):
@@ -46,6 +49,74 @@ class BalanceHistory(object):
 
         return [[date_list[i], balances[i]] for i in range(len(date_list))]
 
+    def getMonthlyBurnRate(self):
+
+        monthly_dict = {}
+
+        for balance in self.balance_list:
+
+            if balance[0][:-3] not in monthly_dict.keys():
+                monthly_dict[balance[0][:-3]] = [balance[1]]
+            else:
+                monthly_dict[balance[0][:-3]].append(balance[1])
+
+        monthly_dict_max = {}
+
+        for key, values in reversed(monthly_dict.items()):
+            monthly_dict_max[key] = max(values)
+
+        #print(monthly_dict_max)
+
+        burnTimes = []
+        for value in monthly_dict_max.values():
+            burnTimes.append(self.burnTime(value))
+
+        print(burnTimes)
+
+    def burnTime(self, balance_value):
+
+        balance_date = None
+        previous = None
+        next_balances = None
+
+        for item in self.balance_list:
+            if item[1] == balance_value:
+                balance_date = item[0]
+                previous = self.balance_list[self.balance_list.index(item) + 1]
+                next_balances = [x for x in reversed(self.balance_list[:self.balance_list.index(item)])]
+
+        if balance_date is None or previous is None or next_balances is None:
+            raise Exception("Error de balance date o transaccion previa (self.burnRate())")
+
+        if next_balances == []:
+            return -1
+
+        #print(next_balances)
+        #print(previous)
+
+        burnTime = -1
+
+        for balance in next_balances:
+            #print("hey1")
+
+            if balance[1] <= previous[1]:
+
+                #print("hey2")
+
+                time_prev = [int(x) for x in previous[0].split("-")]
+                #print(time_prev)
+                time_prev = date(time_prev[0], time_prev[1], time_prev[2])
+
+                time_post = [int(x) for x in balance[0].split("-")]
+                #print(time_post)
+                time_post = date(time_post[0], time_post[1], time_post[2])
+
+                burnTime = time_post - time_prev
+                break
+
+
+        return burnTime
+
     def construct(self, transactions):
 
         #for transaction in transactions:
@@ -68,7 +139,8 @@ class BalanceHistory(object):
             balance_list.append(current)
 
         if min(balance_list) < 0:
-            return -1
+            min_value = min(balance_list)
+            balance_list = [x - min_value for x in balance_list]
 
         recent_date = [int(x) for x in timelist[0].split("-")]
         recent_date = date(recent_date[0], recent_date[1], recent_date[2])
@@ -98,7 +170,7 @@ class BalanceHistory(object):
                 x_0.append(" ")
                 count += 1
 
-        plt.figure(dpi = 1200)
+        #plt.figure(dpi = 1200)
 
         plt.plot(x, y, "-ok", markersize=2)
         plt.xticks(x, labels=x_0, rotation=45, fontsize = 8)
@@ -161,15 +233,27 @@ def timeseriesbyid(reportId):
 with open("Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-timeseriesbyid("c910ad1e-3d9a-407c-aee2-0f5893a02d00")
+#timeseriesbyid("660ccd46-5b75-4478-b270-702b8cde06a2")
 
 def test():
+
+    undefined_reports = set()
+
     for item in container:
-        result = timeseriesbyid(item["reportId"])
+        #print(item)
+        for transaction in item["transactions"]:
+            if "undefined" in transaction["date"]:
+                undefined_reports.add(item["reportId"])
+                break
 
-        if result is None:
-            print(item["reportId"])
+    with open("undefined_reports.txt", "w") as file:
+        for item in undefined_reports:
+            file.write(item)
+            file.write("\n")
 
-#timeseriesbyid(container[25]["reportId"])
 
 
+
+#timeseriesbyid(container[321]["reportId"])
+test()
+#BalanceHistory(fake_report["reportId"], fake_report["transactions"], fake_report["assets"]["accounts"]["account1"]["balance"])
