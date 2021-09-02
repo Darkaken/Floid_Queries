@@ -94,6 +94,7 @@ def querygen(query_filter_override):
                     FilterExpression = eval(QC.query),
                     ExclusiveStartKey = key
                 )
+                print("success")
                 break
             except:
                 print('failed')

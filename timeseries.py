@@ -3,6 +3,8 @@ import pickle
 import matplotlib.pyplot as plt
 from datetime import date, datetime, timedelta
 from fake_report import fake_report
+from decimal import Decimal
+from statistics import mean
 
 class BalanceHistory(object):
 
@@ -68,43 +70,82 @@ class BalanceHistory(object):
         #print(monthly_dict_max)
 
         burnTimes = []
+        time_matrix = []
         for value in monthly_dict_max.values():
-            burnTimes.append(self.burnTime(value))
+            #burnTimes.append(self.burnTime(value, 1))
+            time_matrix.append(self.burnToMaxPercentage(value))
 
-        print(burnTimes)
+        #print(burnTimes)
+        #print(time_matrix)
 
-    def burnTime(self, balance_value):
+    def burnToMaxPercentage(self, balance_value, percentages = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
 
         balance_date = None
-        previous = None
         next_balances = None
 
         for item in self.balance_list:
             if item[1] == balance_value:
                 balance_date = item[0]
-                previous = self.balance_list[self.balance_list.index(item) + 1]
                 next_balances = [x for x in reversed(self.balance_list[:self.balance_list.index(item)])]
+                break
 
-        if balance_date is None or previous is None or next_balances is None:
+        if balance_date is None or next_balances is None:
             raise Exception("Error de balance date o transaccion previa (self.burnRate())")
 
         if next_balances == []:
             return -1
 
-        #print(next_balances)
-        #print(previous)
+        #print(balance_value)
+        #print(balance_date)
+        #print("###########")
+
+        timelist = []
+        for percentage in percentages:
+            multiplier = (100 - percentage) / 100
+            #print(float(balance_value) * float(multiplier))
+            for balance in next_balances:
+                if balance[1] <= float(balance_value) * float(multiplier):
+                    timelist.append([percentage, balance[0]])
+                    break
+
+        print(timelist)
+        return timelist
+
+    def burnTime(self, balance_value, previous_amount):
+
+        balance_date = None
+        previous_balance = None
+        next_balances = None
+        prev_date = None
+
+        for item in self.balance_list:
+            if item[1] == balance_value:
+                try:
+                    balance_date = item[0]
+                    previous_balance = mean([self.balance_list[self.balance_list.index(item) + i + 1][1] for i in range(previous_amount)])
+                    prev_date = self.balance_list[self.balance_list.index(item) + 1][0]
+                    next_balances = [x for x in reversed(self.balance_list[:self.balance_list.index(item)])]
+                except Exception as e:
+                    #print(item)
+                    #print(e)
+                    pass
+
+        if balance_date is None or previous_balance is None or next_balances is None:
+            raise Exception("Error de balance date o transaccion previa (self.burnRate())")
+
+        if next_balances == []:
+            return -1
 
         burnTime = -1
 
         for balance in next_balances:
-            #print("hey1")
+            # print("hey1")
 
-            if balance[1] <= previous[1]:
+            if balance[1] <= previous_balance:
+                # print("hey2")
 
-                #print("hey2")
-
-                time_prev = [int(x) for x in previous[0].split("-")]
-                #print(time_prev)
+                time_prev = [int(x) for x in prev_date.split("-")]
+                # print(time_prev)
                 time_prev = date(time_prev[0], time_prev[1], time_prev[2])
 
                 time_post = [int(x) for x in balance[0].split("-")]
@@ -113,7 +154,6 @@ class BalanceHistory(object):
 
                 burnTime = time_post - time_prev
                 break
-
 
         return burnTime
 
@@ -203,6 +243,7 @@ def timeseriesbyid(reportId):
         selected = None
         for item in container:
             if item["reportId"] == reportId:
+                print(item["assets"])
                 selected = item
 
         if selected is None:
@@ -233,27 +274,40 @@ def timeseriesbyid(reportId):
 with open("Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-#timeseriesbyid("660ccd46-5b75-4478-b270-702b8cde06a2")
+timeseriesbyid("660ccd46-5b75-4478-b270-702b8cde06a2")
 
-def test():
+#timeseriesbyid("132531db-8216-4729-8c62-d1e65d14a187")
+#timeseriesbyid("2ed76be0-0e12-41c5-aa00-e0dc7b3fd637")
+#timeseriesbyid("8775f1e8-4f46-499b-873a-1568663c339f")
+#timeseriesbyid("90c6fdec-74f5-4c48-99d3-a2cde6321c8c")
+#timeseriesbyid("e05e3e20-7143-46ed-8e39-095c86fa7721")
 
-    undefined_reports = set()
+
+def x_most_transactions(x):
+
+    best_ids = {}
 
     for item in container:
-        #print(item)
-        for transaction in item["transactions"]:
-            if "undefined" in transaction["date"]:
-                undefined_reports.add(item["reportId"])
-                break
 
-    with open("undefined_reports.txt", "w") as file:
-        for item in undefined_reports:
-            file.write(item)
-            file.write("\n")
+        if len(best_ids) < x:
+            best_ids[item["reportId"]] = len(item["transactions"])
+
+        elif len(item["transactions"]) >= min(best_ids.values()):
+
+            keu = None
+
+            for key, value in best_ids.items():
+                if value == min(best_ids.values()):
+
+                    keu = key
 
 
+            best_ids[item["reportId"]] = len(item["transactions"])
+            del best_ids[keu]
 
+    return best_ids
+
+#print(x_most_transactions(5))
 
 #timeseriesbyid(container[321]["reportId"])
-test()
 #BalanceHistory(fake_report["reportId"], fake_report["transactions"], fake_report["assets"]["accounts"]["account1"]["balance"])
