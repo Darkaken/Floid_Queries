@@ -4,6 +4,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from statistics import stdev, mean
 from time import sleep
+from collections import defaultdict
 
 class Stats(object):
     def __init__(self):
@@ -71,7 +72,7 @@ def openSheet():
     client = gspread.authorize(creds)
     sheet = client.open('Estadisticas por Banco')
 
-    return sheet.get_worksheet(5)
+    return sheet.get_worksheet(6)
 
 def obtenerStats(contenedor):
 
@@ -114,21 +115,10 @@ def statsToSheet(sheetInstance, stat):
 
     count = 2    #Desface Row
 
-    for key, values in stat.stats.items():
+    to_print = defaultdict(int)
 
-        while True:
-            try:
-                sheetInstance.update_cell(count, 1, key)
-                for i in range(5):
-                    sleep(1)
-                    sheetInstance.update_cell(count, i+2, values[i])
-
-                break
-            except:
-                pass
-
-        count += 1
-
+    for k, v in stat.stats.items():
+        to_print[k] = v[0]
 
     while True:
         try:
@@ -140,6 +130,25 @@ def statsToSheet(sheetInstance, stat):
             break
         except:
             pass
+
+    for key in sorted(to_print, key=to_print.get, reverse=True):
+
+        while True:
+            try:
+                if to_print[key] > 10:
+                    sheetInstance.update_cell(count, 1, key)
+                    for i in range(1):
+                        sleep(1)
+                        sheetInstance.update_cell(count, i+2, to_print[key])
+
+                break
+            except Exception as e:
+                print(e)
+
+        count += 1
+
+
+
 
 def getFrecuency(freq_dict):
     new_dict = {}
@@ -189,9 +198,9 @@ def frecuencyToSheet(sheetInstance, freq_dict):
 
 if __name__ == '__main__':
 
-    container = importData()
+    container = importData(all_banks = True)
     worksheet = openSheet()
     print("sheet abierto")
     #frecuencyToSheet(worksheet, merger(container))
-    print('listo')
     statsToSheet(worksheet, obtenerStats(container))
+    print('listo')

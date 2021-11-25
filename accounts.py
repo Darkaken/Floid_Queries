@@ -113,15 +113,15 @@ def accountGen(data_dict):
 
     return all_accounts
 
-def exportData(item, all_banks = False):
+def exportData(item, all_banks = True):
 
     if not all_banks:
         with open(f'Data/{bank}.pickle', 'wb') as outfile:
             pickle.dump(item, outfile)
 
     else:
-        with open(f'Data/all_reports.pickle', 'wb') as infile:
-            return pickle.dump(item, infile)
+        with open(f'Data/all_reports.pickle', 'wb') as outfile:
+            return pickle.dump(item, outfile)
 
 def importData(all_banks = False):
 
@@ -129,7 +129,7 @@ def importData(all_banks = False):
         with open(f'Data/{bank}.pickle', 'rb') as infile:
             return pickle.load(infile)
     else:
-        with open(f'../Data/all_reports.pickle', 'rb') as infile:
+        with open(f'Data/all_reports.pickle', 'rb') as infile:
             return pickle.load(infile)
 
 
@@ -138,14 +138,14 @@ if __name__ == '__main__':
     with open("Data/all_data.pickle", "rb") as infile:
         container = pickle.load(infile)
 
-    data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict and x["bank"] == "estado"]
+    data = [[x["reportId"], x["transactions"]] for x in container if type(x) == dict]
 
     container = accountGen(inoutFiltering(duplicateFiltering(data)))
 
     #container = accountGen(duplicateFiltering(querygen(None)))
 
-    exportData(container, all_banks=False)
-
+    exportData(container, all_banks=True)
+    print(len(container.accounts))
     #container = importData()
 
     #container2 = accountGen(duplicateFiltering(data))
