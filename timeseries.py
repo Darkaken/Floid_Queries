@@ -20,7 +20,7 @@ class BalanceHistory(object):
         #self.maketimeseries(step = 30, save=False)
 
         self.balance_list = self.construct(transactions)
-        self.getMonthlyBurnRate()
+        self.matrix = self.getMonthlyBurnRate()
         #self.maketimeseries(step = 3, save=False, filenameModifier = "_simplified")
 
     @staticmethod
@@ -76,7 +76,7 @@ class BalanceHistory(object):
             time_matrix.append(self.burnToMaxPercentage(value))
 
         #print(burnTimes)
-        #print(time_matrix)
+        return time_matrix
 
     def burnToMaxPercentage(self, balance_value, percentages = (10, 20, 30, 40, 50, 60, 70, 80, 90, 100)):
 
@@ -108,7 +108,7 @@ class BalanceHistory(object):
                     timelist.append([percentage, balance[0]])
                     break
 
-        print(timelist)
+        #print(timelist)
         return timelist
 
     def burnTime(self, balance_value, previous_amount):
@@ -243,7 +243,7 @@ def timeseriesbyid(reportId):
         selected = None
         for item in container:
             if item["reportId"] == reportId:
-                print(item["assets"])
+                #print(item["assets"])
                 selected = item
 
         if selected is None:
@@ -266,6 +266,7 @@ def timeseriesbyid(reportId):
         #print(f"Balance: {balance}")
 
         balancehistory = BalanceHistory(reportId, selected["transactions"], balance)
+        return balancehistory.matrix
 
     except Exception as e:
         BalanceHistory.globalcounterNoneType += 1
@@ -274,7 +275,7 @@ def timeseriesbyid(reportId):
 with open("Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-timeseriesbyid("660ccd46-5b75-4478-b270-702b8cde06a2")
+#timeseriesbyid("660ccd46-5b75-4478-b270-702b8cde06a2")
 
 #timeseriesbyid("132531db-8216-4729-8c62-d1e65d14a187")
 #timeseriesbyid("2ed76be0-0e12-41c5-aa00-e0dc7b3fd637")

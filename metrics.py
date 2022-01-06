@@ -3,13 +3,15 @@ import pickle
 import matplotlib.pyplot as plt
 from datetime import date, datetime, timedelta
 import math
+from statistics import mean
 import re
+
+from parameters import high_income_words, low_income_words, investment_words, not_income_words
 
 from timeseries import BalanceHistory, timeseriesbyid
 
 def roundup(x):
     return int(math.ceil(x / 100.0)) * 100
-
 
 def ammount_of_transactions(all_reports):
 
@@ -381,37 +383,281 @@ def get_all_stats(one_report):
     return stat_dict
 
 
+def encontrar_empleador(reporte, palabras_empleador, N = 2, valor_min = 50000):
+
+    income_transactions = []
+    candidatos = []
+    candidatos_unique = {}
+
+    for transaction in reporte['transactions']:
+        try:
+            if transaction['in'] > valor_min:
+                income_transactions.append(transaction)
+        except:
+            pass
+
+    for transaction in income_transactions:
+        found = False
+        desc = transaction['description'].lower()
+
+        for word in palabras_empleador:
+            if (' ' + word) in desc or (word + ' ') in desc:
+                found = True
+                candidatos.append(transaction)
+                break
+
+        if not found:
+            if len(re.sub("[^0-9]", "", desc)) >= 7: #Si es que tiene mas de 7 numeros asumimos que es un rut
+                candidatos.append(transaction)
+                break
+
+    for transaction in candidatos:
+        if sum([1 for x in candidatos if x['description'] == transaction['description']]) >= N:
+            try:
+                candidatos_unique[transaction['description']].append(transaction['in'])
+            except:
+                candidatos_unique[transaction['description']] = [transaction['in']]
+
+    final_candidatos = []
+
+    for k, v in candidatos_unique.items():
+        final_candidatos.append([k, round(mean(v))])
+
+    try:
+        #print(final_candidatos)
+        return [x[0] for x in final_candidatos if x[1] == max([value[1] for value in final_candidatos])]
+    except:
+        return []
+
+def encontrar_dependencia_primer_algoritmo(reporte, palabras_clave_high, palabras_clave_low, valor_min = 50000):
+
+    high_income_transactions = []
+    low_income_transactions = []
+    income_transactions = []
+
+    for transaction in reporte['transactions']:
+        try:
+            if transaction['in'] > valor_min:
+                income_transactions.append(transaction)
+        except:
+            pass
+
+    for transaction in income_transactions:
+
+        desc = transaction['description'].lower()
+
+        if len(re.sub("[^0-9]", "", desc)) >= 7:
+            high_income_transactions.append(transaction)
+        elif "remuneracion" in desc:
+            high_income_transactions.append(transaction)
+        elif "sueldo" in desc:
+            high_income_transactions.append(transaction)
+        elif "trabajo" in desc:
+            high_income_transactions.append(transaction)
+        else:
+            if "spa" in desc:
+                low_income_transactions.append(transaction)
+
+    found = False
+    confidence = 'None'
+
+    if len(high_income_transactions) > 0:
+        found = True
+        confidence = 'High'
+    elif len(low_income_transactions) > 0:
+        found = True
+        confidence = 'Low'
+
+    return [found, confidence]
+
+def encontrar_dependencia_segundo_algoritmo(reporte, X, P, N, U, T, Q, B):
+
+    #TIPO I
+
+    min_meses = X
+    porcentaje_ingreso = P
+    frecuecia_minima = N
+    desviacion_de_maximos = U
+    diferencia_mensual = T
+
+    #TIPO II
+
+    desviacion_balance = Q
+    cantidad_minima_transacciones = B
+
+    income_transactions = []
+
+    for transaction in reporte['transactions']:
+        try:
+            if transaction['in'] > 0:
+                income_transactions.append(transaction)
+        except:
+            pass
+
+
+def encontrar_ingreso(reporte, N, len_burnout):
+
+    valor_min = N
+
+    high_income_transactions = []
+    low_income_transactions = []
+    income_transactions = []
+
+    not_income_transactions = []
+
+    for transaction in reporte['transactions']:
+        try:
+            if transaction['in'] >= valor_min:
+                income_transactions.append(transaction)
+        except:
+            pass
+
+    for transaction in income_transactions:
+
+        desc = transaction['description'].lower()
+
+        if len(re.sub("[^0-9]", "", desc)) >= 7:
+            high_income_transactions.append(transaction)
+        else:
+
+            isIncome = False
+            for keyword in high_income_words:
+                if keyword in desc:
+                    high_income_transactions.append(transaction)
+                    isIncome = True
+
+            for keyword in low_income_words:
+                if keyword in desc:
+                    low_income_transactions.append(transaction)
+                    isIncome = True
+
+            if not isIncome:
+                not_income_transactions.append(transaction)
+
+    high_confidence_income = sum(transaction['in'] for transaction in high_income_transactions) / len_burnout
+    low_confidence_income = sum(transaction["in"] for transaction in low_income_transactions) / len_burnout
+
+    not_income_transactions_filtered = not_income_transactions[:]
+
+    not_words = investment_words + not_income_words
+    for transaction in not_income_transactions:
+        for keyword in not_words:
+            if keyword in transaction['description'].lower():
+                try:
+                    not_income_transactions_filtered.remove(transaction)
+                except:
+                    pass
+
+    no_confidence_income = sum(transaction['in'] for transaction in not_income_transactions) / len_burnout
+
+    for transaction in high_income_transactions:
+        print(f"high {transaction['description']} : {transaction['in']}")
+
+    print("")
+    for transaction in low_income_transactions:
+        print(f"low {transaction['description']} : {transaction['in']}")
+
+    print("")
+    for transaction in not_income_transactions_filtered:
+        print(f"none {transaction['description']} : {transaction['in']}")
+
+    print("")
+
+    print(f' High Confidence: {round(high_confidence_income)}')
+    print(f' Low Confidence: {round(low_confidence_income)}')
+    print(f' Total Income: {round(float(high_confidence_income) + float(low_confidence_income))}')
+
+    print("")
+    print(f' No Confidence: {round(no_confidence_income)}')
+
+
+    return [high_confidence_income, low_confidence_income, not_income_transactions_filtered]
+
+def incomeseries(not_income_transactions_filtered):
+
+    pass
+
+
 def test(all_reports):
 
     stat_dict = {
         'all_reports': len(all_reports),
-        'burn_rate_matrix': 0,
-        'empresa_ingreso': 0,
-        'dependiente': 0,
-        'ingreso_high': 0,
-        'ingreso_low': 0,
-        'ahorro': 0,
+        'dependiente_alto': 0,
+        'dependiente_bajo': 0,
         'independiente': 0,
+        'found_empleador': 0,
+        'empleador_not_found': 0
     }
 
     for item in all_reports:
-        datas = get_all_stats(item)
+        if encontrar_empleador(item, ['spa'], 2) != []:
+            stat_dict['found_empleador'] += 1
+        else:
+            stat_dict['empleador_not_found'] += 1
 
-        for key in datas.keys():
-            if datas[key]:
-                stat_dict[key] += 1
+        found, confidence = encontrar_dependencia_primer_algoritmo(item, [], [])
 
-    stat_dict['independiente'] = len(all_reports) - stat_dict['dependiente']
+        if found:
+            if confidence == 'High':
+                stat_dict['dependiente_alto'] += 1
+            else:
+                stat_dict['dependiente_bajo'] += 1
+        else:
+            stat_dict['independiente'] += 1
 
     print(stat_dict)
     return stat_dict
+
+def income_test(report):
+
+    burn_rate_matrix = timeseriesbyid(report['reportId'])
+
+    if burn_rate_matrix != -1 and burn_rate_matrix is not None:
+        burn_rate_matrix = [x for x in burn_rate_matrix if type(x) == list]
+
+        try:
+            max_len = max([len(x) for x in burn_rate_matrix])
+        except:
+            pass
+
+        try:
+            for item in burn_rate_matrix:
+                for i in range(max_len - len(item)):
+                    item.append('inf')
+        except:
+            pass
+
+        result = encontrar_ingreso(report, 25000, len(burn_rate_matrix) - 1)
+
+        return result
+
+    print(burn_rate_matrix)
 
 
 with open("Data/all_data.pickle", "rb") as infile:
     container = pickle.load(infile)
 
-    test(container)
-    #data = get_all_stats(container[2888])
-    #print(container[2888]['reportId'])
+    number = 2643
 
-    #print(data)
+    result = income_test(container[number])
+
+    print('')
+    print(f' Main Income: {container[number]["income"]["mainAverage"]}')
+    print(f" Total Income: {container[number]['income']['totalAverage']}")
+
+
+# 2643
+# 315
+# 2771
+# 3542
+# 4162
+
+#Valor minimo de transaccion
+
+#palabras_high_income
+#palabras_low_income
+#palabras_investment
+#palabras_not_income
+
+#representa_X_percent_income_total
+#porcentaje_de_pendiente_a_considerar
